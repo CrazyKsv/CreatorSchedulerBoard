@@ -1,0 +1,19 @@
+# Patterns to ignore when building a chart tarball.
+.DS_Store
+.git/
+.gitignore
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.orig
+*.bak
+*.log
+# Editor backup / scratch
+*~
+# CI / local tooling
+.github/
+.tox/
+# Project-specific
+OWNERS
+README.md.tpl

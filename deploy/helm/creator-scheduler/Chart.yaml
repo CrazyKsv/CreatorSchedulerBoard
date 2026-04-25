@@ -1,0 +1,19 @@
+apiVersion: v2
+name: creator-scheduler
+description: |
+  Helm chart for the Creator Scheduler take-home — a FastAPI backend with a
+  SQLite PVC and a Vite/React SPA served by nginx, fronted by a single
+  ingress (/ → frontend, /api/v1 → backend).
+type: application
+# Chart version — bump when the templates change.
+version: 0.1.0
+# appVersion — bump when the application (backend + frontend image) changes.
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+keywords:
+  - fastapi
+  - vite
+  - sqlite
+  - minikube
+maintainers:
+  - name: Creator Scheduler

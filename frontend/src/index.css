@@ -1,331 +1,654 @@
-:root {
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
-  color: #1a1a1a;
-  background-color: #f5f5f5;
+/* Neon Studio — dark base. Replace the contents of frontend/src/index.css
+   with this file (or diff over).
+
+   Load fonts via <link> in index.html rather than @import here so they're
+   preconnected and HTML-parsed early:
+
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Inter:wght@300..700&family=JetBrains+Mono:wght@300..700&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Dark-only for now. `[data-theme]` is structurally reserved so that a
+     future light / print variant can be layered in without restructuring
+     consumers — override these vars in a `:root[data-theme="light"]`
+     block. No light-mode values committed yet. */
+  :root, :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ns-bg: #0d0e14;
+    --ns-bg-2: #10111a;
+    --ns-panel: #151723;
+    --ns-panel-2: #1c1f2d;
+    --ns-line: rgba(255,255,255,.08);
+    --ns-line-2: rgba(255,255,255,.14);
+    --ns-ink: #f1f2f7;
+    --ns-ink-2: #c8cad4;
+    --ns-ink-muted: #8a8d99;
+    --ns-ink-faint: #575a66;
+    --ns-cyan: #5eead4;
+    --ns-magenta: #ff5eb5;
+    --ns-violet: #a594ff;
+    --ns-amber: #ffb547;
+    --ns-amber-soft: #ffd17a;
+    --ns-danger: #ff6a82;
+  }
+
+  html, body, #root {
+    background: var(--ns-bg);
+    color: #f1f2f7;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    font-size: 17px;               /* bumped from browser default 16px */
+    -webkit-font-smoothing: antialiased;
+    min-height: 100%;
+  }
+
+  /* Kill the react-big-calendar default light palette — overrides shipped
+     separately in components/CalendarView.jsx via theme className. */
+
+  ::selection {
+    background: rgba(94,234,212,.25);
+    color: #f1f2f7;
+  }
+
+  /* Scrollbars blend with the dark canvas */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.12) transparent;
+  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.10);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); background-clip: padding-box; }
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer components {
+  /* Editorial serif header — use on h1/h2 or via <Headline> helper */
+  .ns-headline {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+  }
+  .ns-headline-italic { font-style: italic; }
+  .ns-gradient-text {
+    background: linear-gradient(135deg, #5eead4, #a594ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-}
+  /* Eyebrow / station labels / meta lines */
+  .ns-eyebrow {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.18em;
+    color: #8a8d99;
+    text-transform: uppercase;
+  }
 
-a {
-  color: #2563eb;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
+  /* Panels */
+  .ns-panel {
+    background: #151723;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+  }
+  .ns-panel-raised {
+    background: #1c1f2d;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 10px;
+  }
 
-/* Layout */
-.layout {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+  /* Buttons */
+  .ns-btn {
+    @apply inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-all;
+  }
+  .ns-btn-ghost {
+    @apply ns-btn text-ink-2 border border-line-2 bg-transparent hover:bg-panel;
+  }
+  .ns-btn-primary {
+    @apply ns-btn text-[#0a0b10] font-semibold;
+    background: linear-gradient(135deg, #5eead4, #a594ff);
+    box-shadow: 0 8px 24px rgba(94,234,212,.28);
+  }
+  .ns-btn-primary:hover { filter: brightness(1.05); }
+  .ns-btn-amber {
+    @apply ns-btn font-semibold;
+    color: #241500;
+    background: #ffb547;
+    box-shadow: 0 8px 24px rgba(255,181,71,.30);
+  }
+  .ns-btn-amber:hover { filter: brightness(1.05); }
 
-.nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.5rem;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
-}
+  /* Status chips */
+  .ns-chip {
+    @apply inline-flex items-center gap-1.5 rounded px-2 py-0.5 font-mono text-[11px] tracking-wider;
+  }
+  .ns-chip-scheduled { background: rgba(94,234,212,.10);  color: #5eead4;  border: 1px solid rgba(94,234,212,.25); }
+  .ns-chip-published { background: rgba(94,234,212,.18);  color: #5eead4;  border: 1px solid rgba(94,234,212,.45); }
+  .ns-chip-archived  { background: rgba(255,255,255,.05); color: #575a66;  border: 1px solid rgba(255,255,255,.08); }
+  .ns-chip-conflict  { background: rgba(255,181,71,.10);  color: #ffd17a;  border: 1px solid rgba(255,181,71,.35); }
+  .ns-chip-critical  { background: rgba(255,106,130,.12); color: #ff6a82;  border: 1px solid rgba(255,106,130,.40); }
 
-.nav-brand {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #111;
-}
-.nav-brand:hover {
-  text-decoration: none;
-  color: #2563eb;
-}
+  /* The thing that makes the brand feel alive: platform-rail surface.
+     Animate via `animate-ns-rail-flow` on the same element. */
+  .ns-rail {
+    background: repeating-linear-gradient(
+      90deg,
+      currentColor 0 30px,
+      rgba(255,255,255,0.04) 30px 60px
+    );
+    background-size: 60px 100%;
+    height: 2px;
+    border-radius: 999px;
+  }
+  .ns-rail-conflict {
+    background: linear-gradient(
+      90deg,
+      currentColor 0 25%,
+      #ffb547 25% 55%,
+      currentColor 55%
+    );
+    height: 3px;
+    border-radius: 999px;
+    box-shadow: 0 0 18px rgba(255,181,71,.55);
+  }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
+  /* ─────────────────────────────────────────────────────────────
+     SeriesCard internals (dark retrofit of the original .card /
+     .rail / .node / .menu / .btn primitives from index.css). These
+     are referenced by class from SeriesCard.jsx, PostCard.jsx, and
+     the series rail inside Dashboard.
+     ───────────────────────────────────────────────────────────── */
 
-.nav-links a {
-  color: #374151;
-}
-.nav-links a:hover {
-  color: #2563eb;
-}
+  .card {
+    background: var(--ns-panel);
+    border: 1px solid var(--ns-line);
+    border-radius: 14px;
+  }
+  .hairline {
+    height: 1px;
+    background: var(--ns-line);
+  }
 
-.btn-link {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: inherit;
-  color: #374151;
-  padding: 0;
-}
-.btn-link:hover {
-  color: #dc2626;
-  text-decoration: underline;
-}
+  /* Series timeline rail — spans the height of the posts list. */
+  .rail {
+    position: absolute;
+    left: 19px;
+    top: 28px;
+    bottom: 28px;
+    width: 2px;
+    background: linear-gradient(
+      180deg,
+      rgba(94,234,212,0.35),
+      rgba(94,234,212,0.10) 60%,
+      transparent
+    );
+    border-radius: 999px;
+    opacity: 0.9;
+  }
+  .rail.rail-cyan {
+    background: linear-gradient(
+      180deg,
+      rgba(94,234,212,0.55),
+      rgba(165,148,255,0.20) 70%,
+      transparent
+    );
+    box-shadow: 0 0 8px rgba(94,234,212,0.25);
+  }
 
-.main {
-  flex: 1;
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-}
+  .node {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--ns-panel-2);
+    border: 2px solid var(--ns-line-2);
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+  }
+  .node.filled {
+    background: #5eead4;
+    border-color: rgba(94,234,212,0.55);
+    box-shadow: 0 0 10px rgba(94,234,212,0.45);
+  }
+  .node.published {
+    background: #10B981;
+    border-color: rgba(16,185,129,0.55);
+    box-shadow: 0 0 12px rgba(16,185,129,0.55);
+  }
+  .node.canceled {
+    background: var(--ns-panel-2);
+    border-color: var(--ns-ink-faint);
+  }
+  .node.archived {
+    background: #2a2d3c;
+    border-color: var(--ns-ink-faint);
+    opacity: 0.65;
+  }
 
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  font-size: 0.875rem;
-  cursor: pointer;
-  text-decoration: none;
-}
-.btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
+  /* Buttons — minimal dark equivalents to the original `.btn` /
+     `.btn-ghost` / `.btn-primary` so the imported components work
+     unmodified. Full ns-btn-* classes remain available for new code. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ns-ink-2);
+    background: transparent;
+    border: 1px solid transparent;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--ns-panel-2); color: var(--ns-ink); }
+  .btn-ghost { color: var(--ns-ink-muted); }
+  .btn-ghost:hover { background: var(--ns-panel-2); color: var(--ns-ink); }
+  .btn-primary {
+    color: #0a0b10;
+    font-weight: 600;
+    background: linear-gradient(135deg, #5eead4, #a594ff);
+    box-shadow: 0 8px 24px rgba(94,234,212,.28);
+    border-color: transparent;
+  }
+  .btn-primary:hover { filter: brightness(1.05); background: linear-gradient(135deg, #5eead4, #a594ff); }
 
-.btn.primary {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
-}
-.btn.primary:hover {
-  background: #1d4ed8;
-}
+  /* Segmented control (view toggle: List / Calendar / Track). Horizontal row
+     of buttons, first is leftmost, `.active` lights up in cyan. */
+  .seg {
+    display: inline-flex;
+    align-items: stretch;
+    background: var(--ns-panel);
+    border: 1px solid var(--ns-line-2);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg > button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ns-ink-muted);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+    white-space: nowrap;
+  }
+  .seg > button:hover:not(.active) {
+    color: var(--ns-ink);
+    background: var(--ns-panel-2);
+  }
+  .seg > button.active {
+    color: #5eead4;
+    background: rgba(94,234,212,0.10);
+    box-shadow: inset 0 0 0 1px rgba(94,234,212,0.25);
+  }
 
-.btn.small {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8125rem;
-}
+  /* Small eyebrow label — "Content schedule" etc. */
+  .label {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ns-ink-muted);
+  }
 
-/* Auth */
-.auth-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 1rem;
-}
+  /* Error callout (fetchError banner at the top of the Dashboard). */
+  .callout-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255,106,130,0.08);
+    border: 1px solid rgba(255,106,130,0.32);
+    border-radius: 10px;
+    color: #fca5a5;
+    font-size: 14px;
+    line-height: 1.45;
+  }
 
-.auth-card {
-  width: 100%;
-  max-width: 380px;
-  background: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+  /* Meatball popover — dark, cyan-accented hover, red danger. */
+  .menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: var(--ns-panel-2);
+    border: 1px solid var(--ns-line-2);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 220px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.55), 0 0 0 1px rgba(94,234,212,.06);
+    z-index: 50;
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 13.5px;
+    color: var(--ns-ink-2);
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+  }
+  .menu button:hover {
+    background: rgba(94,234,212,0.10);
+    color: var(--ns-ink);
+  }
+  .menu button.danger { color: #ff6a82; }
+  .menu button.danger:hover {
+    background: rgba(255,106,130,0.10);
+    color: #ff8a9e;
+  }
+  .menu .menu-sep {
+    height: 1px;
+    background: var(--ns-line);
+    margin: 4px 0;
+  }
+  .menu .menu-hint {
+    padding: 6px 10px 4px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ns-ink-faint);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
 
-.auth-card h1 {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
-}
+  /* Subtle fade-in when cards mount. */
+  .fade-in {
+    animation: ns-fade-in .28s ease both;
+  }
+  @keyframes ns-fade-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: none; }
+  }
 
-.auth-card label {
-  display: block;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
+  /* ─────────────────────────────────────────────────────────────
+     Form controls. PostForm + SeriesBuilder + Dashboard filters
+     all render native inputs/selects/textareas. These classes
+     dark-mode them consistently with a cyan focus ring.
+     ───────────────────────────────────────────────────────────── */
+  .ns-input,
+  .ns-select,
+  .ns-textarea {
+    display: block;
+    width: 100%;
+    background: var(--ns-panel-2);
+    color: var(--ns-ink);
+    border: 1px solid var(--ns-line-2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14.5px;
+    font-family: inherit;
+    transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+    outline: none;
+  }
+  .ns-input::placeholder,
+  .ns-textarea::placeholder {
+    color: var(--ns-ink-faint);
+  }
+  .ns-input:hover,
+  .ns-select:hover,
+  .ns-textarea:hover {
+    border-color: rgba(255,255,255,.22);
+  }
+  .ns-input:focus,
+  .ns-select:focus,
+  .ns-textarea:focus {
+    border-color: rgba(94,234,212,.55);
+    background: #161825;
+    box-shadow: 0 0 0 3px rgba(94,234,212,.18);
+  }
+  .ns-input:disabled,
+  .ns-select:disabled,
+  .ns-textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--ns-panel);
+  }
+  .ns-select {
+    /* Custom caret so the native one blends with the dark fill. */
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--ns-ink-muted) 50%),
+      linear-gradient(135deg, var(--ns-ink-muted) 50%, transparent 50%);
+    background-position:
+      calc(100% - 14px) 14px,
+      calc(100% - 9px) 14px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 28px;
+  }
+  .ns-select option {
+    background: var(--ns-panel-2);
+    color: var(--ns-ink);
+  }
 
-.auth-card input {
-  display: block;
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
-}
+  /* Field-level error shell (wraps an input + its error row). */
+  .ns-field-error .ns-input,
+  .ns-field-error .ns-select,
+  .ns-field-error .ns-textarea {
+    border-color: rgba(255,106,130,.50);
+    box-shadow: 0 0 0 3px rgba(255,106,130,.12);
+  }
 
-.auth-card button {
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.625rem;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-.auth-card button:hover:not(:disabled) {
-  background: #1d4ed8;
-}
-.auth-card button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+  /* Info / warn / danger banners used by forms + conflict surfaces. */
+  .ns-banner {
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    border: 1px solid transparent;
+  }
+  .ns-banner-info    { background: rgba(165,148,255,.08); border-color: rgba(165,148,255,.22); color: #c8beff; }
+  .ns-banner-warning { background: rgba(255,181,71,.08);  border-color: rgba(255,181,71,.28);  color: #ffd17a; }
+  .ns-banner-danger  { background: rgba(255,106,130,.08); border-color: rgba(255,106,130,.28); color: #ff8a9e; }
 
-.auth-footer {
-  margin-top: 1.5rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
+  /* Stage card (SeriesBuilder's 4 stage boxes). */
+  .ns-stage-card {
+    background: var(--ns-panel-2);
+    border: 1px solid var(--ns-line);
+    border-radius: 12px;
+    padding: 14px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .ns-stage-card.ns-stage-error {
+    border-color: rgba(255,106,130,.45);
+    background: linear-gradient(180deg, rgba(255,106,130,.06), var(--ns-panel-2));
+    box-shadow: 0 0 0 1px rgba(255,106,130,.20), 0 0 20px rgba(255,106,130,.10);
+  }
 
-.error {
-  padding: 0.5rem 0.75rem;
-  margin-bottom: 1rem;
-  background: #fef2f2;
-  color: #dc2626;
-  border-radius: 6px;
-  font-size: 0.875rem;
-}
+  /* ───────────────────────── Sidebar (primary nav) ───────────────────────── */
 
-.loading {
-  padding: 2rem;
-  text-align: center;
-  color: #6b7280;
-}
+  .ns-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 12px 14px;
+    gap: 14px;
+    background: rgba(13,14,20,0.78);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid var(--ns-line);
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    z-index: 30;
+  }
+  .ns-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px 4px;
+  }
+  .ns-sidebar-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #f472b6;
+    background: rgba(244,114,182,0.10);
+    box-shadow: inset 0 0 0 1px rgba(244,114,182,0.35), 0 0 14px rgba(244,114,182,0.20);
+    cursor: default;
+    flex-shrink: 0;
+  }
+  .ns-sidebar-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    min-width: 0;
+  }
+  .ns-sidebar-brand-title {
+    font-family: "Fraunces", ui-serif, Georgia, serif;
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--ns-ink);
+    letter-spacing: -0.01em;
+  }
+  .ns-sidebar-brand-sub {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    color: var(--ns-ink-muted);
+    text-transform: uppercase;
+  }
+  .ns-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ns-sidebar-spacer { flex: 1; }
+  .ns-sidebar-btn {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+    color: var(--ns-ink-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease, border-color .12s ease;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    text-align: left;
+    width: 100%;
+  }
+  .ns-sidebar-btn:hover {
+    color: var(--ns-ink);
+    background: var(--ns-panel-2);
+  }
+  .ns-sidebar-btn.active {
+    color: #5eead4;
+    background: rgba(94,234,212,0.10);
+    border-color: rgba(94,234,212,0.30);
+    box-shadow: 0 0 10px rgba(94,234,212,0.14);
+  }
+  .ns-sidebar-btn-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ns-sidebar-btn-primary {
+    margin-top: 12px;
+    color: #0a0b10;
+    background: linear-gradient(135deg, #5eead4, #a594ff);
+    font-weight: 600;
+  }
+  .ns-sidebar-btn-primary:hover {
+    color: #0a0b10;
+    background: linear-gradient(135deg, #6df3dd, #b4a4ff);
+  }
 
-/* Posts list */
-.posts-list-page .page-header,
-.post-edit-page .page-header,
-.calendar-page .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.page-header h1,
-.calendar-page h1 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.filters {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.filters select {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.875rem;
-}
-
-.table-wrap {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
-}
-
-.posts-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.posts-table th,
-.posts-table td {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.posts-table th {
-  background: #f9fafb;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-
-.posts-table tbody tr:hover {
-  background: #f9fafb;
-}
-
-.platform {
-  text-transform: capitalize;
-}
-
-.status {
-  display: inline-block;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-.status-draft { background: #f3f4f6; color: #374151; }
-.status-scheduled { background: #dbeafe; color: #1d4ed8; }
-.status-published { background: #d1fae5; color: #065f46; }
-.status-failed { background: #fee2e2; color: #991b1b; }
-
-/* Post form */
-.post-form {
-  max-width: 480px;
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.post-form label {
-  display: block;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.post-form input,
-.post-form select {
-  display: block;
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-/* Calendar */
-.calendar-page h1 {
-  margin-bottom: 0.25rem;
-}
-
-.calendar-hint {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.calendar-wrap {
-  background: #fff;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-
-.rbc-calendar {
-  font-family: inherit;
-}
-.rbc-event {
-  padding: 2px 6px;
-  font-size: 0.75rem;
+  /* ───────────────────── Agent thinking progress ─────────────────────
+     Used by SchedulerAgent's AgentThinking phase. A row per step
+     (parsing intent / selecting tools / running tools / drafting reply)
+     with a leading icon-or-pulse, label, detail, and trailing
+     QUEUED/RUNNING/DONE chip. Active row is cyan-accented; done rows
+     fade to ink-2 with a subtle emerald check.
+     ───────────────────────────────────────────────────────────────── */
+  .ns-agent-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    background: var(--ns-panel-2);
+    border: 1px solid var(--ns-line);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 12.5px;
+    color: var(--ns-ink-2);
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .ns-agent-step-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(94, 234, 212, .14);
+    color: #5eead4;
+  }
+  .ns-agent-step.active {
+    border-color: rgba(94, 234, 212, .45);
+    background: linear-gradient(180deg, rgba(94, 234, 212, .08), var(--ns-panel-2));
+    color: var(--ns-ink);
+    box-shadow: 0 0 0 1px rgba(94, 234, 212, .22), 0 0 18px rgba(94, 234, 212, .14);
+  }
+  .ns-agent-step.done {
+    border-color: rgba(34, 197, 94, .35);
+    color: var(--ns-ink-2);
+  }
+  .ns-agent-step.done .ns-agent-step-icon {
+    background: rgba(34, 197, 94, .18);
+    color: #22c55e;
+  }
+  .ns-agent-pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #5eead4;
+    box-shadow: 0 0 10px #5eead4;
+    animation: ns-pulse-dot 1s ease-in-out infinite;
+  }
+  @keyframes ns-pulse-dot {
+    0%, 100% { opacity: .55; transform: scale(.85); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+  }
 }

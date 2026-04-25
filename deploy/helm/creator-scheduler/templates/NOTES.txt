@@ -1,0 +1,45 @@
+{{- $fullName := include "creator-scheduler.fullname" . -}}
+Thanks for installing {{ .Chart.Name }} v{{ .Chart.Version }} (app {{ .Chart.AppVersion }})!
+
+Release:   {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+
+1. Wait for pods to become Ready:
+
+     kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }} -w
+
+{{- if .Values.ingress.enabled }}
+
+2. Find your minikube IP and map the ingress host to it:
+
+     MINIKUBE_IP=$(minikube ip)
+     echo "$MINIKUBE_IP  {{ .Values.ingress.host }}" | sudo tee -a /etc/hosts
+
+3. Open the app in your browser:
+
+     http://{{ .Values.ingress.host }}/
+
+   API:         http://{{ .Values.ingress.host }}/api/v1
+   Swagger UI:  http://{{ .Values.ingress.host }}/docs
+{{- else }}
+
+2. Ingress is disabled — port-forward the frontend Service to reach the UI:
+
+     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ $fullName }}-frontend 8080:{{ .Values.frontend.service.port }}
+
+   Then open http://localhost:8080
+{{- end }}
+
+4. Seeded user (created on first boot when the DB is empty):
+
+     email:    alice@example.com
+     password: password123
+
+5. Uninstall:
+
+     helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+   The PersistentVolumeClaim is retained by default. To wipe SQLite data
+   too, delete it manually:
+
+     kubectl -n {{ .Release.Namespace }} delete pvc -l app.kubernetes.io/instance={{ .Release.Name }}

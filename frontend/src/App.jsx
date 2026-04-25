@@ -3,9 +3,10 @@ import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import PostsList from "./pages/PostsList";
-import PostEdit from "./pages/PostEdit";
+import Dashboard from "./pages/Dashboard";
+import ListPage from "./pages/ListPage";
 import CalendarPage from "./pages/CalendarPage";
+import TrackPage from "./pages/TrackPage";
 
 export default function App() {
   return (
@@ -21,10 +22,10 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<PostsList />} />
-          <Route path="posts/new" element={<PostEdit />} />
-          <Route path="posts/:id/edit" element={<PostEdit />} />
+          <Route index element={<Dashboard />} />
+          <Route path="list" element={<ListPage />} />
           <Route path="calendar" element={<CalendarPage />} />
+          <Route path="track" element={<TrackPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

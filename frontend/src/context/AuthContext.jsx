@@ -3,6 +3,15 @@ import { authApi } from "../api/client";
 
 const AuthContext = createContext(null);
 
+async function hydrateProfile(token) {
+  try {
+    const profile = await authApi.me();
+    return { token, ...profile };
+  } catch {
+    return { token };
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,14 +22,23 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
-    setUser({ token });
-    setLoading(false);
+    let cancelled = false;
+    hydrateProfile(token).then((u) => {
+      if (!cancelled) {
+        setUser(u);
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = async (email, password) => {
     const { access_token } = await authApi.login(email, password);
     localStorage.setItem("token", access_token);
-    setUser({ token: access_token });
+    const u = await hydrateProfile(access_token);
+    setUser(u);
   };
 
   const register = async (data) => {

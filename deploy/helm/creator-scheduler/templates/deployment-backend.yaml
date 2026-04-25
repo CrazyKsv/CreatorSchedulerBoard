@@ -1,0 +1,67 @@
+{{- $component := "backend" -}}
+{{- $name := include "creator-scheduler.componentName" (dict "ctx" . "component" $component) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "creator-scheduler.componentLabels" (dict "ctx" . "component" $component) | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  # SQLite on RWO — Recreate avoids two pods fighting for the same volume.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "creator-scheduler.componentSelectorLabels" (dict "ctx" . "component" $component) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "creator-scheduler.componentSelectorLabels" (dict "ctx" . "component" $component) | nindent 8 }}
+      annotations:
+        # Roll pods when the ConfigMap or Secret contents change.
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap-backend.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ $name }}
+            - secretRef:
+                name: {{ $name }}
+          {{- if .Values.backend.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.backend.persistence.mountPath }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.backend.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.backend.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.backend.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.backend.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backend.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.backend.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.backend.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.backend.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{- if .Values.backend.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $name }}-data
+      {{- end }}

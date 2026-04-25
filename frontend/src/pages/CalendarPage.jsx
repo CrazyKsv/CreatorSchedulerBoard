@@ -1,67 +1,49 @@
-import { useState, useEffect } from "react";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import { enUS } from "date-fns/locale";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import { postsApi } from "../api/client";
+// /calendar route — full-width CalendarView.
 
-const locales = { "en-US": enUS };
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-});
+import { useOutletContext } from "react-router-dom";
+import CalendarView from "../components/CalendarView";
+import Icon from "../components/Icon";
 
 export default function CalendarPage() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [view, setView] = useState("month");
+  const s = useOutletContext();
 
-  useEffect(() => {
-    postsApi
-      .list()
-      .then((posts) => {
-        const evts = posts
-          .filter((p) => p.scheduled_at)
-          .map((p) => ({
-            id: p.id,
-            title: p.title,
-            start: new Date(p.scheduled_at),
-            end: new Date(new Date(p.scheduled_at).getTime() + 60 * 60 * 1000),
-            resource: { platform: p.platform, status: p.status },
-          }));
-        setEvents(evts);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="loading">Loading calendar…</div>;
+  if (s.loading) {
+    return (
+      <div className="rounded-lg p-10 text-center text-[13px]"
+        style={{
+          background: "var(--ns-panel)",
+          border: "1px dashed var(--ns-line-2)",
+          color: "var(--ns-ink-muted)",
+        }}>
+        Loading…
+      </div>
+    );
+  }
 
   return (
-    <div className="calendar-page">
-      <h1>Calendar</h1>
-      <p className="calendar-hint">Scheduled posts appear as events. Only posts with a scheduled time are shown.</p>
-      <div className="calendar-wrap">
-        <Calendar
-          localizer={localizer}
-          events={events}
-          views={["month", "week", "day", "agenda"]}
-          view={view}
-          onView={(nextView) => setView(nextView)}
-          startAccessor="start"
-          endAccessor="end"
-          titleAccessor="title"
-          style={{ height: 600 }}
-          eventPropGetter={(event) => ({
-            style: {
-              backgroundColor: event.resource?.status === "published" ? "#22c55e" : "#3b82f6",
-            },
-          })}
-        />
+    <div className="space-y-5">
+      <div>
+        <div className="label mb-1">Content schedule</div>
+        <h1 className="ns-headline ns-headline-italic text-[28px] leading-none tracking-tight"
+          style={{ color: "var(--ns-ink)", fontWeight: 500 }}>
+          Calendar
+        </h1>
       </div>
+
+      {s.fetchError && (
+        <div className="callout-error">
+          <Icon name="alert-triangle" size={14} />
+          <div className="whitespace-pre-wrap">{s.fetchError}</div>
+        </div>
+      )}
+
+      <CalendarView
+        posts={s.allFlatPosts}
+        onSelectEvent={(p) => {
+          if (p.series_id) return;
+          s.openEditPost(p);
+        }}
+      />
     </div>
   );
 }

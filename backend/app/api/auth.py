@@ -1,7 +1,10 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.models.user import User
@@ -46,3 +49,13 @@ async def login(
         )
     token = create_access_token(data={"sub": str(user.id)})
     return Token(access_token=token)
+
+
+@router.get("/me", response_model=UserResponse)
+async def me(current_user: Annotated[User, Depends(get_current_user)]):
+    """Return the authenticated user's profile (id, email, full_name).
+
+    Used by the frontend to render personalized greetings without
+    re-decoding the JWT or threading user info through every endpoint.
+    """
+    return current_user
