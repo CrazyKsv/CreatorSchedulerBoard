@@ -5,7 +5,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_register_success(client: AsyncClient):
     r = await client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={
             "email": "new@example.com",
             "password": "secret123",
@@ -23,11 +23,11 @@ async def test_register_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client: AsyncClient):
     await client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={"email": "dup@example.com", "password": "secret123"},
     )
     r = await client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={"email": "dup@example.com", "password": "other456"},
     )
     assert r.status_code == 400
@@ -37,11 +37,11 @@ async def test_register_duplicate_email(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login_success(client: AsyncClient):
     await client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={"email": "login@example.com", "password": "mypass"},
     )
     r = await client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "login@example.com", "password": "mypass"},
     )
     assert r.status_code == 200
@@ -53,11 +53,11 @@ async def test_login_success(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient):
     await client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={"email": "user@example.com", "password": "correct"},
     )
     r = await client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "user@example.com", "password": "wrong"},
     )
     assert r.status_code == 401
@@ -67,7 +67,7 @@ async def test_login_wrong_password(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login_unknown_user(client: AsyncClient):
     r = await client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "nobody@example.com", "password": "any"},
     )
     assert r.status_code == 401

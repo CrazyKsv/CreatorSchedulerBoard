@@ -1,0 +1,58 @@
+{{- if .Values.ingress.enabled -}}
+{{- $backendName := include "creator-scheduler.componentName" (dict "ctx" . "component" "backend") -}}
+{{- $frontendName := include "creator-scheduler.componentName" (dict "ctx" . "component" "frontend") -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "creator-scheduler.fullname" . }}
+  labels:
+    {{- include "creator-scheduler.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          # API path first — ingress-nginx matches longest prefix but
+          # listing it first also keeps the intent obvious.
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $backendName }}
+                port:
+                  number: {{ .Values.backend.service.port }}
+          # OpenAPI docs, served by FastAPI at /docs and /openapi.json.
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $backendName }}
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /openapi.json
+            pathType: Exact
+            backend:
+              service:
+                name: {{ $backendName }}
+                port:
+                  number: {{ .Values.backend.service.port }}
+          # Everything else → frontend SPA.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $frontendName }}
+                port:
+                  number: {{ .Values.frontend.service.port }}
+{{- end }}

@@ -1,0 +1,51 @@
+# Keep Docker build contexts small and deterministic.
+# Used by both local `docker compose build` and the CI `compose-build` job.
+
+# VCS / platform metadata
+.git
+.gitignore
+.github
+
+# Spec-kit and local tooling
+.specify
+specs
+docs
+
+# Markdown / documentation (rebuilt images don't need these)
+*.md
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+
+# Python dev artifacts
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+
+# Node / frontend build artifacts
+**/node_modules
+**/dist
+**/build
+**/.next
+**/coverage
+
+# Runtime data and secrets — MUST NOT be baked into images
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Misc
+**/*.log
+**/*.swp
+**/*.tmp

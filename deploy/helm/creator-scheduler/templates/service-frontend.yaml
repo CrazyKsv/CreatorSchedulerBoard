@@ -1,0 +1,16 @@
+{{- $component := "frontend" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "creator-scheduler.componentName" (dict "ctx" . "component" $component) }}
+  labels:
+    {{- include "creator-scheduler.componentLabels" (dict "ctx" . "component" $component) | nindent 4 }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.frontend.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "creator-scheduler.componentSelectorLabels" (dict "ctx" . "component" $component) | nindent 4 }}

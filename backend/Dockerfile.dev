@@ -1,0 +1,28 @@
+# Backend development image for docker-compose.
+# Pinned to Python 3.11 (readme.md documents "Python 3.9+" for the venv
+# workflow; CI and this image pin 3.11 as a superset — see research.md §8).
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install runtime dependencies first so layer caching survives source edits.
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+
+# Copy the backend source. At runtime docker-compose bind-mounts ./backend
+# over /app, so the copied contents are masked — the COPY here only exists
+# so the image itself is self-contained for `docker compose build` in CI
+# (FR-012b) and for any non-compose docker run.
+COPY . .
+
+RUN chmod +x /app/docker-entrypoint.sh
+
+EXPOSE 8000
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

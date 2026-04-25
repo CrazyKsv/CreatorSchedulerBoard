@@ -1,0 +1,30 @@
+# Per-context dockerignore for the backend production build.
+# Build context is ./backend, so Docker reads THIS file (not the repo root one).
+
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.venv
+venv
+
+# Runtime data / secrets — NEVER bake into the image
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+.env.local
+
+# Tests live in the image (we keep scripts/) but CI artifacts should not
+.coverage
+htmlcov
+
+# Editor/OS cruft
+.DS_Store
+.idea
+.vscode
+*.log
+*.swp
+*.tmp

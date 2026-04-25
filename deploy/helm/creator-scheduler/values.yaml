@@ -1,0 +1,126 @@
+# Default values for the creator-scheduler chart.
+# Designed to work out of the box with `minikube start` + `minikube addons
+# enable ingress`, assuming images are pre-loaded into minikube's Docker
+# daemon via `eval $(minikube docker-env)` + `docker build`.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# -----------------------------------------------------------------------------
+# Backend (FastAPI + SQLite)
+# -----------------------------------------------------------------------------
+backend:
+  replicaCount: 1
+
+  image:
+    repository: creator-scheduler-backend
+    tag: "0.1.0"
+    # IfNotPresent is mandatory for minikube + locally-built images. Using
+    # Always would cause ImagePullBackOff because the image isn't in a
+    # registry.
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # PVC-backed SQLite file. RWO is sufficient because only one replica
+  # can write to a SQLite file anyway; the Deployment uses Recreate
+  # strategy so the volume can detach cleanly between pod versions.
+  persistence:
+    enabled: true
+    size: 1Gi
+    # Empty → use the cluster's default StorageClass (minikube's is
+    # "standard"). Override if your cluster uses a different class.
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    mountPath: /app/data
+
+  # Env consumed by the app at runtime. DATABASE_URL intentionally points
+  # into the PVC mount; SEED_CHECK_DB matches so the entrypoint checks the
+  # persisted file.
+  env:
+    databaseUrl: sqlite+aiosqlite:////app/data/scheduler.db
+    seedOnEmpty: "1"
+    seedCheckDb: /app/data/scheduler.db
+    # Comma-separated CORS origins. Safe default for same-origin ingress;
+    # if you split frontend onto a different host, add it here.
+    corsOrigins: ""
+    uvicornReload: "0"
+
+  # SECRET_KEY for JWT signing. Leave empty and the chart will generate a
+  # random 48-char value on first install and preserve it across upgrades
+  # via a `lookup` in templates/secret.yaml. Override here only if you
+  # want to pin a specific key.
+  secretKey: ""
+
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 5
+    readiness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+# -----------------------------------------------------------------------------
+# Frontend (Vite build → nginx static serve)
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 1
+
+  image:
+    repository: creator-scheduler-frontend
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      path: /
+      initialDelaySeconds: 2
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+# -----------------------------------------------------------------------------
+# Ingress (single host, path-based routing)
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  host: scheduler.local
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""

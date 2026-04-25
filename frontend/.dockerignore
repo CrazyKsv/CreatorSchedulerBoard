@@ -1,0 +1,22 @@
+# Per-context dockerignore for the frontend production build.
+# Build context is ./frontend, so Docker reads THIS file (not the repo root one).
+
+node_modules
+dist
+build
+coverage
+.cache
+
+# Env files — never bake secrets into the bundle. VITE_API_URL is injected
+# via --build-arg at build time instead.
+.env
+.env.*
+.env.local
+
+# Editor/OS cruft
+.DS_Store
+.idea
+.vscode
+*.log
+*.swp
+*.tmp

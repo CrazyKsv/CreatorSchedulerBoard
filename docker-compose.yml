@@ -1,0 +1,75 @@
+# Local development stack for the Creator Scheduler.
+#
+# Start everything:
+#   cp backend/.env.example backend/.env   # optional — defaults work
+#   docker compose up
+#
+# Stop (keep DB):        docker compose down
+# Reset (wipe DB):       docker compose down && rm -f backend/scheduler.db && docker compose up
+# Tail logs:             docker compose logs -f
+#
+# Persistence model: the SQLite database file lives at `backend/scheduler.db`
+# on the host via a bind-mount of `./backend` — the same path readme.md has
+# always documented. No named Docker volumes are used. See
+# specs/001-ci-docker-compose/contracts/compose-services.md for the full
+# contract.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    # NOTE on env loading: we deliberately DO NOT declare `env_file:` here,
+    # and we keep the `environment:` block minimal. Why: pydantic-settings
+    # inside the backend reads env vars first and `.env` files second. If
+    # compose sets SECRET_KEY / DATABASE_URL via `environment:`, the
+    # developer's backend/.env loses. Instead, we let pydantic-settings
+    # read `backend/.env` itself (the bind mount puts it at /app/.env,
+    # which `backend/app/core/config.py` already expects). Only variables
+    # consumed OUTSIDE pydantic-settings (like SEED_ON_EMPTY, read by the
+    # entrypoint shell) belong in the compose `environment:` block.
+    environment:
+      SEED_ON_EMPTY: ${SEED_ON_EMPTY:-1}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Host bind-mount: source + scripts + tests + pytest.ini + the runtime
+      # scheduler.db file all live under ./backend on the host. Matches the
+      # readme.md-documented layout exactly.
+      - ./backend:/app
+      # Anonymous volumes mask host-side dev artifacts that would otherwise
+      # leak into the Linux container (venv wheels from macOS/Windows,
+      # stale bytecode).
+      - /app/.venv
+      - /app/__pycache__
+      - /app/.pytest_cache
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      # Browser runs on the host, so localhost is the host's loopback.
+      # 003: backend routers now mount under `/api/v1` (tasks T011).
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      # Granular source mounts so we don't bind-mount node_modules from the
+      # host (which would mask the container's npm ci result).
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/eslint.config.js:/app/eslint.config.js
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/package-lock.json:/app/package-lock.json
+      # 003: Tailwind + PostCSS config files live at the frontend root and
+      # are consumed at Vite dev-server boot. Bind-mount so host edits
+      # (e.g., palette tweaks) reach the container without a rebuild.
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+      # Anonymous volume preserves the container's installed node_modules.
+      - /app/node_modules
+    restart: unless-stopped

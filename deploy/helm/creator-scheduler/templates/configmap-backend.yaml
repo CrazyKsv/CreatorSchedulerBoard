@@ -1,0 +1,16 @@
+{{- /*
+Non-secret backend environment: DB location, seed gate, CORS origins,
+uvicorn reload flag. Consumed via envFrom on the Deployment.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "creator-scheduler.componentName" (dict "ctx" . "component" "backend") }}
+  labels:
+    {{- include "creator-scheduler.componentLabels" (dict "ctx" . "component" "backend") | nindent 4 }}
+data:
+  DATABASE_URL: {{ .Values.backend.env.databaseUrl | quote }}
+  SEED_ON_EMPTY: {{ .Values.backend.env.seedOnEmpty | quote }}
+  SEED_CHECK_DB: {{ .Values.backend.env.seedCheckDb | quote }}
+  CORS_ORIGINS: {{ include "creator-scheduler.corsOrigins" . | quote }}
+  UVICORN_RELOAD: {{ .Values.backend.env.uvicornReload | quote }}

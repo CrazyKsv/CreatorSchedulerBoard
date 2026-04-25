@@ -1,0 +1,30 @@
+{{- if .Values.backend.persistence.enabled -}}
+{{- /*
+PersistentVolumeClaim for the SQLite database file.
+
+RWO is sufficient — only one writer at a time. The backend Deployment
+uses a Recreate strategy so the volume can unmount from the old pod
+before the new one mounts it.
+
+The PVC is annotated with `helm.sh/resource-policy: keep` so that a
+plain `helm uninstall` does NOT delete user data. Wipe manually if
+needed (see NOTES.txt).
+*/ -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "creator-scheduler.componentName" (dict "ctx" . "component" "backend") }}-data
+  labels:
+    {{- include "creator-scheduler.componentLabels" (dict "ctx" . "component" "backend") | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - {{ .Values.backend.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.size }}
+  {{- with .Values.backend.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+{{- end }}

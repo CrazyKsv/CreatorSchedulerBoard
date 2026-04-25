@@ -2,9 +2,12 @@
 backend/.venv
 backend/__pycache__
 backend/**/__pycache__
+
+# Dev-local data and secrets (shared by the non-Docker and Docker Compose
+# workflows — see readme.md "Run with Docker" and backend/.env.example)
 backend/*.db
 backend/.env
-
+backend/.pytest_cache
 # Frontend (also has its own .gitignore)
 frontend/node_modules
 frontend/dist
@@ -13,3 +16,10 @@ frontend/dist
 .DS_Store
 .idea
 *.local
+
+
+.specify/*
+!.specify/memory/
+
+.claude
+test-plan/fixtures/

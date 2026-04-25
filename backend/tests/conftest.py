@@ -33,7 +33,7 @@ async def client():
 async def auth_headers(client: AsyncClient):
     """Register a test user and return headers with Bearer token."""
     await client.post(
-        "/api/auth/register",
+        "/api/v1/auth/register",
         json={
             "email": "test@example.com",
             "password": "testpass123",
@@ -41,7 +41,7 @@ async def auth_headers(client: AsyncClient):
         },
     )
     r = await client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={"email": "test@example.com", "password": "testpass123"},
     )
     assert r.status_code == 200

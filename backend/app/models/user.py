@@ -15,3 +15,4 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     posts = relationship("Post", back_populates="owner", cascade="all, delete-orphan")
+    series = relationship("Series", back_populates="owner", cascade="all, delete-orphan")

@@ -1,0 +1,24 @@
+# Frontend development image for docker-compose.
+# Runs the Vite dev server inside the container with the host's source
+# directory bind-mounted over it for hot reload (FR-006).
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install deps first for layer caching. `npm ci` honors package-lock.json
+# (FR-014).
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy source so the image is self-contained for `docker compose build` in
+# CI (FR-012b). At runtime the compose file bind-mounts ./frontend/src and
+# siblings over these copies; an anonymous volume preserves container
+# node_modules.
+COPY . .
+
+EXPOSE 5173
+
+# --host 0.0.0.0 is required so the host-published port forward reaches the
+# Vite dev server (default is 127.0.0.1, which refuses external connections).
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
